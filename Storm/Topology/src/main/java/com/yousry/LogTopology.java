@@ -7,8 +7,6 @@ import org.apache.storm.eventhubs.spout.EventHubSpout;
 import org.apache.storm.eventhubs.spout.EventHubSpoutConfig;
 import org.apache.storm.generated.StormTopology;
 import org.apache.storm.topology.TopologyBuilder;
-
-import java.io.FileReader;
 import java.util.Properties;
 
 
@@ -76,7 +74,7 @@ public class LogTopology {
     }
 
     protected void runScenario(String[] args) throws Exception {
-        boolean runLocal = true;
+        boolean runLocal = false;
         readEventHubConfig(args);
         StormTopology topology = buildTopology();
         Config config = new Config();

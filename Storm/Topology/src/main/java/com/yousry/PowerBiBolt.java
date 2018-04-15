@@ -10,8 +10,6 @@ import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,7 +35,6 @@ public class PowerBiBolt extends BaseRichBolt {
                 return;
             }
 
-
             String value = tuple.getString(0);
             if (value!=null)
                 logger.info("Before processing GDELT, content length : " + value.length());
@@ -46,8 +43,6 @@ public class PowerBiBolt extends BaseRichBolt {
             summarizeLines(lines);
             logger.info("GDELT data processed");
             collector.ack(tuple);
-
-            // do your bolt stuff
         } catch (Exception e) {
             logger.error("Bolt execute error: {}", e);
             collector.reportError(e);
