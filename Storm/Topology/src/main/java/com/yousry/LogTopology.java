@@ -18,11 +18,7 @@ public class LogTopology {
 
     protected void readEventHubConfig(String[] args) throws Exception {
         Properties properties = new Properties();
-        if (args.length > 1) {
-            properties.load(new FileReader(args[1]));
-        } else {
-            properties.load(ClassLoader.getSystemResourceAsStream("Config.properties"));
-        }
+        properties.load(ClassLoader.getSystemResourceAsStream("Config.properties"));
 
         String username = properties.getProperty("eventhubspout.username");
         String password = properties.getProperty("eventhubspout.password");
