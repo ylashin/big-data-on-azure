@@ -79,7 +79,7 @@ function DownloadAllFiles($FileUrls)
             
             $outputFile = "C:\AzureTemp\$fileName"
             
-            $fileHandled = DoesFileExistAtDestination "https://bigdisk.blob.core.windows.net/gdelt/$fileName"
+            $fileHandled = DoesFileExistAtDestination "https://$StorageAccountName.blob.core.windows.net/gdelt/$fileName"
 
             if ($fileHandled -eq $false)
             {

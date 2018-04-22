@@ -1,5 +1,8 @@
 Login-AzureRmAccount 
 
+$StorageAccountName = "YOUR-STORAGE-ACCOUNT-NAME-CONTAINING-GDELT-DATA" 
+$StorageAccountKey = "YOUR-STORAGE-ACCOUNT-KEY"
+
 # If you have multiple subscriptions, set the one to use
 # $subscriptionID = "<subscription ID to use>"
 # Select-AzureRmSubscription -SubscriptionId $subscriptionID
@@ -47,8 +50,10 @@ $clusterOS = "Linux"
 # Create a blob container. This holds the default data store for the cluster.
 New-AzureStorageContainer  -Name $clusterName -Context $defaultStorageContext
 
-$additionalStorageAccountName = "bigdisk"
-$additionalStorageAccountKey = "0/cec94BOvVYzpPbYi7beqas5A9wZV3XibLYK5dS9K8BInjpcXQdckMIKT4qiDLYFZIMj+rl1K3lVO1ejdee6w=="
+$additionalStorageAccountName = $StorageAccountName
+$additionalStorageAccountKey = $StorageAccountKey
+
+
 $config = New-AzureRmHDInsightClusterConfig
 $config.ComponentVersion["Spark"] = "2.2"
 $config.ClusterType = "Spark"
