@@ -1,4 +1,5 @@
-Login-AzureRmAccount 
+# the below can be used with sevice principals to allow for un-attended execution
+Login-AzureRmAccount  -SubscriptionName "YOUR-SUBSCRIPTION-NAME"
 
 $StorageAccountName = "YOUR-STORAGE-ACCOUNT-NAME-CONTAINING-GDELT-DATA" 
 $StorageAccountKey = "YOUR-STORAGE-ACCOUNT-KEY"

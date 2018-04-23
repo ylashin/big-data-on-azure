@@ -1,5 +1,5 @@
 # the below can be used with sevice principals to allow for un-attended execution
-Login-AzureRmAccount 
+Login-AzureRmAccount -SubscriptionName "YOUR-SUBSCRIPTION-NAME"
 
 # If you have multiple subscriptions, set the one to use
 # $subscriptionID = "<subscription ID to use>"
