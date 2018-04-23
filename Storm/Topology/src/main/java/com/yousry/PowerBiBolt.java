@@ -3,10 +3,10 @@ package com.yousry;
 import com.google.gson.Gson;
 import org.apache.storm.Config;
 import org.apache.storm.Constants;
-import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
+import org.apache.storm.topology.BasicOutputCollector;
 import org.apache.storm.topology.OutputFieldsDeclarer;
-import org.apache.storm.topology.base.BaseRichBolt;
+import org.apache.storm.topology.base.BaseBasicBolt;
 import org.apache.storm.tuple.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,10 +14,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class PowerBiBolt extends BaseRichBolt {
-    private OutputCollector collector;
+public class PowerBiBolt extends BaseBasicBolt {
     private static final Logger logger = LoggerFactory.getLogger(PowerBiBolt.class);
-    private Map<String,Integer> dataMap = new HashMap<String,Integer>();
+    private Map<String,Integer> globalMap = new HashMap<String,Integer>();
     private String powerBiPushUrl;
 
     public Map<String, Object> getComponentConfiguration() {
@@ -26,26 +25,35 @@ public class PowerBiBolt extends BaseRichBolt {
         return conf;
     }
 
-    public void execute(Tuple tuple) {
-        logger.info("Bolt execute is called");
+    public void execute(Tuple tuple, BasicOutputCollector outputCollector) {
+        logger.info("PowerBiBolt: execute is called");
         try {
             if (isTickTuple(tuple)) {
-                submitSummaryToPowerBi(dataMap);
-                logger.info("Timer processed");
+                submitSummaryToPowerBi(globalMap);
+                logger.info("PowerBiBolt: Timer processed");
                 return;
             }
 
-            String value = tuple.getString(0);
-            if (value!=null)
-                logger.info("Before processing GDELT, content length : " + value.length());
-
-            String[] lines = value.split("\\r?\\n");
-            summarizeLines(lines);
-            logger.info("GDELT data processed");
-            collector.ack(tuple);
+            Map<String,Integer> localMap = (Map<String,Integer>)tuple.getValueByField("gdeltDataSummary");
+            accumulateEntries(localMap);
+            logger.info("PowerBiBolt: GDELT data processed");
         } catch (Exception e) {
-            logger.error("Bolt execute error: {}", e);
-            collector.reportError(e);
+            logger.error("PowerBiBolt: Bolt execute error: {}", e);
+        }
+
+    }
+
+    private void accumulateEntries(Map<String, Integer> localMap) {
+        for (Map.Entry<String, Integer> entry : localMap.entrySet()) {
+            String key = entry.getKey();
+            if (globalMap.containsKey(key))
+            {
+                globalMap.put(key, globalMap.get(key) + entry.getValue());
+            }
+            else
+            {
+                globalMap.put(key, entry.getValue());
+            }
         }
 
     }
@@ -55,26 +63,7 @@ public class PowerBiBolt extends BaseRichBolt {
                 && tuple.getSourceStreamId().equals(Constants.SYSTEM_TICK_STREAM_ID);
     }
 
-    private void summarizeLines(String[] lines) {
-        for(int i=0;i<lines.length;i++)
-        {
-            String[] values = lines[i].split("\\t");
-
-            String countryCode = values[51]; // action country code position
-
-            if (countryCode == null || countryCode.trim() == "")
-                countryCode = values[37]; // actor 1 country code position
-
-            if (dataMap.containsKey(countryCode))
-                dataMap.put(countryCode,dataMap.get(countryCode) + 1);
-            else
-                dataMap.put(countryCode,1);
-        }
-    }
-
-    public void prepare(Map map, TopologyContext context, OutputCollector collector) {
-        this.collector = collector;
-
+    public void prepare(Map map, TopologyContext context) {
         Properties properties = new Properties();
         try {
             properties.load(ClassLoader.getSystemResourceAsStream("Config.properties"));
@@ -85,7 +74,6 @@ public class PowerBiBolt extends BaseRichBolt {
             e.printStackTrace();
         }
     }
-
 
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         // no output fields

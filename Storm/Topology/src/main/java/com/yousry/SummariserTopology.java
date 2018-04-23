@@ -10,7 +10,7 @@ import org.apache.storm.topology.TopologyBuilder;
 import java.util.Properties;
 
 
-public class LogTopology {
+public class SummariserTopology {
     protected EventHubSpoutConfig spoutConfig;
     protected int numWorkers;
 
@@ -65,11 +65,18 @@ public class LogTopology {
         topologyBuilder.setSpout("EventHubsSpout", eventHubSpout,
                 spoutConfig.getPartitionCount()).setNumTasks(
                 spoutConfig.getPartitionCount());
+
         topologyBuilder
-                .setBolt("PowerBiBolt", new PowerBiBolt(),
-                        spoutConfig.getPartitionCount())
-                .globalGrouping("EventHubsSpout")
+                .setBolt("SummariseBolt", new SummariseBolt(), spoutConfig.getPartitionCount())
+                .shuffleGrouping("EventHubsSpout")
                 .setNumTasks(spoutConfig.getPartitionCount());
+
+
+        topologyBuilder
+                .setBolt("PowerBiBolt", new PowerBiBolt(), numWorkers = 1 )
+                .globalGrouping("SummariseBolt")
+                .setNumTasks(1);
+
         return topologyBuilder.createTopology();
     }
 
@@ -93,7 +100,7 @@ public class LogTopology {
     }
 
     public static void main(String[] args) throws Exception {
-        LogTopology topology = new LogTopology();
+        SummariserTopology topology = new SummariserTopology();
         topology.runScenario(args);
     }
 }
