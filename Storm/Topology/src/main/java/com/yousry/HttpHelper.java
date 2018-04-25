@@ -8,6 +8,11 @@ public class HttpHelper {
 
     public int post(String url, String payload)
     {
+        return post(url, payload, "");
+    }
+
+    public int post(String url, String payload, String authHeaderValue)
+    {
         URL urlObj = null;
         HttpURLConnection con = null;
         try {
@@ -15,7 +20,10 @@ public class HttpHelper {
             con = (HttpURLConnection) urlObj.openConnection();
             con.setRequestMethod("POST");
             con.setRequestProperty("Content-Type", "application/json");
-            con.setRequestProperty("User-Agent", "Storm-Cluster");
+            con.setRequestProperty("accept", "application/json");
+            con.setRequestProperty("User-Agent", "Hadoop-Cluster");
+            if (authHeaderValue != "")
+                con.setRequestProperty("authorization", authHeaderValue);
 
             con.setUseCaches(false);
             con.setDoInput(true);

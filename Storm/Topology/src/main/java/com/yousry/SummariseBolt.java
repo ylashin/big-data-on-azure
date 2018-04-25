@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -95,18 +96,36 @@ public class SummariseBolt extends BaseBasicBolt {
             records.add(record);
         }
 
+
         // lots of magic numbers :) ==> this is batch size to be submitted to HBASE
-        if (records.size() > 1000)
-        {
-            try {
+        int batchSize = 100;
+
+        try {
+            int startIndex = 0;
+            while(true)
+            {
+                int endIndex = startIndex + batchSize -1;
+
+                if (endIndex > records.size())
+                {
+                    endIndex = records.size()-1;
+                }
+                List<HBaseRecord> subList = records.subList(startIndex, endIndex);
                 hbaseHelper.SaveBatch(records);
-                logger.info("Summarise Bolt: yay, saved hbase stuff");
+
+                startIndex+= batchSize;
+                
+                if (startIndex >= records.size())
+                    break;
             }
-            catch (Exception e) {
-                logger.error("Summarise Bolt: cannot save habase records: {}", e);
-            }
-            records.clear();
+
+            logger.info("Summarise Bolt: yay, saved hbase stuff");
         }
+        catch (Exception e) {
+            logger.error("Summarise Bolt: cannot save habase records: {}", e);
+        }
+
+        records.clear();
     }
 
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
