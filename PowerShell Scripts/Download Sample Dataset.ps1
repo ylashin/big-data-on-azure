@@ -9,9 +9,9 @@ $StorageAccountKey = "YOUR-STORAGE-ACCOUNT-KEY"
 function GetDownloadFileUrls () {
     $BaseUrl = "http://gdelt-open-data.s3.amazonaws.com/events/"
 
-    # 1979 - 2005 : yearly
-    # 2006 and March, 2013 : month and year
-    # April 1, 2013, files are created daily
+    # Starting 1979 till 2005 : yearly files
+    # Starting 2006 till March, 2013 : a file per month
+    # Starting April 1, 2013 :  a file per day
 
     $FileUrls = @()
 
@@ -79,6 +79,9 @@ function DownloadAllFiles($FileUrls)
             
             $outputFile = "C:\AzureTemp\$fileName"
             
+            # for the below line to work correctly, storage container should be enabled for public access
+            # we arleady have the key and can inspect stuff securely, but I doing it the easy way
+            # in all cases the data is already public, unless you are concerned about egress cost if someone is DDOSing you
             $fileHandled = DoesFileExistAtDestination "https://$StorageAccountName.blob.core.windows.net/gdelt/$fileName"
 
             if ($fileHandled -eq $false)
