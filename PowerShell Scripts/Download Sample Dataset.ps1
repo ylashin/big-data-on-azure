@@ -32,7 +32,7 @@ function GetDownloadFileUrls () {
     $StartDate = Get-Date "2013-04-01"
 
     #  get all days since 01/04/2013 till 2 days from today just to be sure files are available
-    while ($StartDate -lt (Get-Date).Subtract(2)) {
+    while ($StartDate -lt (Get-Date).AddDays(-2)) {
         $formattedDay = $StartDate.ToString("yyyyMMdd")    
         $FileUrls += "$BaseUrl$formattedDay.export.csv"
         $StartDate = $StartDate.AddDays(1)
