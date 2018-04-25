@@ -45,7 +45,7 @@ public class SummariserTopology {
                 checkpointIntervalInSeconds, receiverCredits);
 
         // set the number of workers to be the same as partition number.
-        // the idea is to have a spout and a logger bolt co-exist in one
+        // the idea is to have a spout and a summariser bolt co-exist in one
         // worker to avoid shuffling messages across workers in storm cluster.
         numWorkers = spoutConfig.getPartitionCount();
         System.out.println("numWorkers: " + numWorkers);

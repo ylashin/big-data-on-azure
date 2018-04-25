@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 public class PowerBiBolt extends BaseBasicBolt {
     private static final Logger logger = LoggerFactory.getLogger(PowerBiBolt.class);
+    private static final CountryCodeMapper countryNameMapper = new CountryCodeMapper();
     private Map<String,Integer> globalMap = new HashMap<String,Integer>();
     private String powerBiPushUrl;
 
@@ -92,11 +93,10 @@ public class PowerBiBolt extends BaseBasicBolt {
     {
         PowerBiPayload[] blobs = new PowerBiPayload[map.size()];
         int index = 0;
-        CountryCodeMapper mapper = new CountryCodeMapper();
 
         for (Map.Entry<String, Integer> entry : map.entrySet()) {
             PowerBiPayload payload = new PowerBiPayload();
-            payload.Country = mapper.GetCountryName(entry.getKey());
+            payload.Country = countryNameMapper.GetCountryName(entry.getKey());
             payload.Count = entry.getValue();
             blobs[index++] = payload;
         }
