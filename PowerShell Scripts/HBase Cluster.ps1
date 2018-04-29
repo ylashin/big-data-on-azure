@@ -39,7 +39,7 @@ $httpCredential = New-Object -TypeName pscredential –ArgumentList "admin", $cl
 $sshCredentials = New-Object -TypeName pscredential –ArgumentList "sshadmin", $clusterPassword
 
 # Default cluster size (# of worker nodes), version, type, and OS
-$clusterSizeInNodes = "4"  # clusterWorkerNodeCount
+$clusterSizeInNodes = "4" 
 $clusterVersion = "3.6"
 $clusterType = "HBASE"
 $clusterOS = "Linux"

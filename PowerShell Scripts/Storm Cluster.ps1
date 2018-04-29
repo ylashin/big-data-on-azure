@@ -39,7 +39,7 @@ $httpCredential = New-Object -TypeName pscredential –ArgumentList "admin", $cl
 $sshCredentials = New-Object -TypeName pscredential –ArgumentList "sshadmin", $clusterPassword
 
 # Default cluster size (# of worker nodes), version, type, and OS
-$clusterSizeInNodes = "2"  # clusterWorkerNodeCount
+$clusterSizeInNodes = "3"
 $clusterVersion = "3.6"
 $clusterType = "STORM"
 $clusterOS = "Linux"
@@ -64,6 +64,7 @@ New-AzureRmHDInsightCluster `
     -DefaultStorageAccountKey $defaultStorageAccountKey `
     -DefaultStorageContainer $clusterName `
     -SshCredential $sshCredentials `
+    -WorkerNodeSize "Standard_D12_v2" # just to have more RAM (28GB instead of 14GB for default worker node size)
 
 
 [console]::beep(2000,500)
