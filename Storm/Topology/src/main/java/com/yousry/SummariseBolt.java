@@ -2,6 +2,7 @@ package com.yousry;
 
 import com.yousry.HBase.HBaseHelper;
 import com.yousry.HBase.HBaseRecord;
+import com.yousry.Helpers.CountryCodeMapper;
 import org.apache.storm.Config;
 import org.apache.storm.Constants;
 import org.apache.storm.task.TopologyContext;
@@ -13,10 +14,8 @@ import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -40,24 +39,23 @@ public class SummariseBolt extends BaseBasicBolt {
     }
 
     public void execute(Tuple tuple , BasicOutputCollector outputCollector) {
-        logger.info("Summarise Bolt: execute is called");
         try {
             if (isTickTuple(tuple)) {
                 outputCollector.emit(new Values(dataMap));
                 dataMap.clear();
-                logger.info("Summarise Bolt: Timer processed");
                 return;
             }
 
             String value = tuple.getString(0);
-            if (value!=null)
-                logger.info("Summarise Bolt: Before processing GDELT, content length : " + value.length());
+            if (value==null)
+                return;
 
+            logger.info("Before processing event hub message of content length : " + value.length());
             String[] lines = value.split("\\r?\\n");
             summarizeLines(lines);
-            logger.info("Summarise Bolt: GDELT data processed");
+            logger.info("GDELT data processed " + lines.length + " lines");
         } catch (Exception e) {
-            logger.error("Summarise Bolt: Bolt execute error: {}", e);
+            logger.error("Bolt execute error: {}", e);
         }
 
     }
@@ -83,49 +81,34 @@ public class SummariseBolt extends BaseBasicBolt {
             else
                 dataMap.put(countryCode,1);
 
-            HBaseRecord record = new HBaseRecord();
-            record.Country = countryNameMapper.GetCountryName(countryCode);
-            String fullDay = values[1].trim(); // in format 19790101
-            record.Day = Integer.parseInt(fullDay.substring(6,8));
-            record.Month = Integer.parseInt(fullDay.substring(4,6));
-            record.Year = Integer.parseInt(fullDay.substring(0,4));
-            record.GoldsteinScale = Float.parseFloat(values[30]);
-            record.Actor1Name = values[6];
-            record.Actor2Name = values[16];
-
-            records.add(record);
+            prepareHBaseRecord(values, countryCode);
         }
-
-
-        // lots of magic numbers :) ==> this is batch size to be submitted to HBASE
-        int batchSize = 100;
 
         try {
-            int startIndex = 0;
-            while(true)
-            {
-                int endIndex = startIndex + batchSize -1;
-
-                if (endIndex > records.size())
-                {
-                    endIndex = records.size()-1;
-                }
-                List<HBaseRecord> subList = records.subList(startIndex, endIndex);
-                hbaseHelper.SaveBatch(records);
-
-                startIndex+= batchSize;
-                
-                if (startIndex >= records.size())
-                    break;
-            }
-
-            logger.info("Summarise Bolt: yay, saved hbase stuff");
+            hbaseHelper.SaveBatch(records);
+            logger.info("Yay, saved " + records.size() + " hbase records");
         }
         catch (Exception e) {
-            logger.error("Summarise Bolt: cannot save habase records: {}", e);
+            logger.error("cannot save hbase records: {}", e);
         }
+        finally {
+            // just ignoring HBase save failures for this simplistic implementation
+            records.clear();
+        }
+    }
 
-        records.clear();
+    private void prepareHBaseRecord(String[] values, String countryCode) {
+        HBaseRecord record = new HBaseRecord();
+        record.Country = countryNameMapper.GetCountryName(countryCode);
+        String fullDay = values[1].trim(); // in format 19790101
+        record.Day = Integer.parseInt(fullDay.substring(6,8));
+        record.Month = Integer.parseInt(fullDay.substring(4,6));
+        record.Year = Integer.parseInt(fullDay.substring(0,4));
+        record.GoldsteinScale = Float.parseFloat(values[30]);
+        record.Actor1Name = values[6];
+        record.Actor2Name = values[16];
+
+        records.add(record);
     }
 
     public void declareOutputFields(OutputFieldsDeclarer declarer) {

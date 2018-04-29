@@ -1,9 +1,12 @@
 package com.yousry;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yousry.Config.ConfigValues;
+import com.yousry.Helpers.CountryCodeMapper;
+import com.yousry.Helpers.HttpHelper;
+import com.yousry.PowerBi.PowerBiPayload;
 import org.apache.storm.Config;
 import org.apache.storm.Constants;
-import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.BasicOutputCollector;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseBasicBolt;
@@ -18,7 +21,6 @@ public class PowerBiBolt extends BaseBasicBolt {
     private static final Logger logger = LoggerFactory.getLogger(PowerBiBolt.class);
     private static final CountryCodeMapper countryNameMapper = new CountryCodeMapper();
     private Map<String,Integer> globalMap = new HashMap<String,Integer>();
-    private String powerBiPushUrl;
 
     public Map<String, Object> getComponentConfiguration() {
         Config conf = new Config();
@@ -27,21 +29,19 @@ public class PowerBiBolt extends BaseBasicBolt {
     }
 
     public void execute(Tuple tuple, BasicOutputCollector outputCollector) {
-        logger.info("PowerBiBolt: execute is called");
+        logger.info("Execute is called");
         try {
             if (isTickTuple(tuple)) {
                 submitSummaryToPowerBi(globalMap);
-                logger.info("PowerBiBolt: Timer processed");
                 return;
             }
 
             Map<String,Integer> localMap = (Map<String,Integer>)tuple.getValueByField("gdeltDataSummary");
             accumulateEntries(localMap);
-            logger.info("PowerBiBolt: GDELT data processed");
+            logger.info("GDELT data processed");
         } catch (Exception e) {
-            logger.error("PowerBiBolt: Bolt execute error: {}", e);
+            logger.error("Bolt execute error: {}", e);
         }
-
     }
 
     private void accumulateEntries(Map<String, Integer> localMap) {
@@ -56,24 +56,11 @@ public class PowerBiBolt extends BaseBasicBolt {
                 globalMap.put(key, entry.getValue());
             }
         }
-
     }
 
     protected static boolean isTickTuple(Tuple tuple) {
         return tuple.getSourceComponent().equals(Constants.SYSTEM_COMPONENT_ID)
                 && tuple.getSourceStreamId().equals(Constants.SYSTEM_TICK_STREAM_ID);
-    }
-
-    public void prepare(Map map, TopologyContext context) {
-        Properties properties = new Properties();
-        try {
-            properties.load(ClassLoader.getSystemResourceAsStream("Config.properties"));
-            powerBiPushUrl = properties.getProperty("powerbi.push.url");
-            System.out.println("PowerBI Push RUL : " + powerBiPushUrl); // ignore security for now
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
@@ -82,11 +69,13 @@ public class PowerBiBolt extends BaseBasicBolt {
 
     public void submitSummaryToPowerBi(Map<String,Integer> map) throws IOException {
         HttpHelper helper = new HttpHelper();
-        Gson gson = new Gson();
-        String stringData = gson.toJson(GetTop10Countries(map).toArray());
-        logger.info("Submitting to PowerBI: " + stringData);
-        int responseCode = helper.post(powerBiPushUrl, stringData);
-        logger.info("Response from PowerBI: " + responseCode);
+        ObjectMapper mapper = new ObjectMapper();
+
+        List<PowerBiPayload> countrySummary = GetTop10Countries(map);
+        String stringData = mapper.writeValueAsString(countrySummary);
+        logger.info("Submitting to PowerBI: {}" , stringData);
+        int responseCode = helper.post(ConfigValues.powerBiPushUrl, stringData);
+        logger.info("Response from PowerBI: {}" , responseCode);
     }
 
     public static List<PowerBiPayload> GetTop10Countries(Map<String,Integer> map)

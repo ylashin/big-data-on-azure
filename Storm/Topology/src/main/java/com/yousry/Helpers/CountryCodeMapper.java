@@ -1,4 +1,4 @@
-package com.yousry;
+package com.yousry.Helpers;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -12,12 +12,9 @@ public class CountryCodeMapper {
 
     private static Map<String,String> countryMap = new HashMap<String,String>();
 
-    public CountryCodeMapper()
+    static
     {
-        if (countryMap.size()>0)
-            return;
-
-        try {
+           try {
             String contents = IOUtils.toString(ClassLoader.getSystemResourceAsStream("Countries.csv"));
             CSVParser parser = CSVParser.parse(contents, CSVFormat.DEFAULT);
             for (CSVRecord csvRecord : parser) {

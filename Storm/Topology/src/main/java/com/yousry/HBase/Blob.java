@@ -1,6 +1,6 @@
 package com.yousry.HBase;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Blob
 {
@@ -15,7 +15,7 @@ class Row
 
 class Cell
 {
-    @SerializedName("$")
+    @JsonProperty(value = "$")
     public String Value;
     public String column;
 }

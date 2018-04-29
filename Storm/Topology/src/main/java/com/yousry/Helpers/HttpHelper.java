@@ -1,10 +1,14 @@
-package com.yousry;
+package com.yousry.Helpers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.DataOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class HttpHelper {
+
+    private static final Logger logger = LoggerFactory.getLogger(HttpHelper.class);
 
     public int post(String url, String payload)
     {
@@ -40,7 +44,7 @@ public class HttpHelper {
             return responseCode;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("HttpHelper: error in POST call: {}", e);
             return -1;
         }
         finally {
